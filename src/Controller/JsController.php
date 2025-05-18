@@ -32,7 +32,7 @@ class JsController extends AbstractController
 
         $timestamp = time();
         $nonce = md5($timestamp);
-        $url = $request->query->has('url', '');
+        $url = $request->query->get('url', '');
         $signature = sha1(sprintf('jsapi_ticket=%s&noncestr=%s&timestamp=%s&url=%s', $re['ticket'], $nonce, $timestamp, $url));
         $config = [
             'debug' => $request->query->get('debug', false),
