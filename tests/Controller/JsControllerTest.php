@@ -5,8 +5,8 @@ namespace WechatOfficialAccountJssdkBundle\Tests\Controller;
 use PHPUnit\Framework\TestCase;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\DependencyInjection\Container;
+use Symfony\Component\HttpFoundation\InputBag;
 use Symfony\Component\HttpFoundation\JsonResponse;
-use Symfony\Component\HttpFoundation\ParameterBag;
 use Symfony\Component\HttpFoundation\Request;
 use WechatOfficialAccountBundle\Entity\Account;
 use WechatOfficialAccountBundle\Repository\AccountRepository;
@@ -51,7 +51,7 @@ class JsControllerTest extends TestCase
         $request = new Request();
         
         // 手动设置参数包
-        $request->query = new ParameterBag([
+        $request->query = new InputBag([
             'url' => '',
             'debug' => false,
             'beta' => false,
@@ -70,7 +70,6 @@ class JsControllerTest extends TestCase
         $this->assertArrayHasKey('appId', $responseData);
         $this->assertEquals('test_app_id', $responseData['appId']);
         $this->assertArrayHasKey('jsApiList', $responseData);
-        $this->assertIsArray($responseData['jsApiList']);
         $this->assertEquals(['updateAppMessageShareData', 'updateTimelineShareData'], $responseData['jsApiList']);
     }
 
@@ -80,7 +79,7 @@ class JsControllerTest extends TestCase
         $request = new Request();
         
         // 手动设置参数包
-        $request->query = new ParameterBag([
+        $request->query = new InputBag([
             'api' => 'chooseImage,previewImage',
             'url' => '',
             'debug' => false,
@@ -103,7 +102,7 @@ class JsControllerTest extends TestCase
         $request = new Request();
         
         // 手动设置参数包
-        $request->query = new ParameterBag([
+        $request->query = new InputBag([
             'url' => '',
             'debug' => true,
             'beta' => false,
@@ -125,11 +124,17 @@ class JsControllerTest extends TestCase
     private function callController(Request $request): JsonResponse
     {
         // 使用我们准备好的依赖调用控制器方法
-        return $this->controller->jssdk(
+        $response = $this->controller->__invoke(
             'test_app_id',
             $this->accountRepository,
             $request,
             $this->client
         );
+        
+        if (!$response instanceof JsonResponse) {
+            throw new \RuntimeException('Expected JsonResponse');
+        }
+        
+        return $response;
     }
 } 

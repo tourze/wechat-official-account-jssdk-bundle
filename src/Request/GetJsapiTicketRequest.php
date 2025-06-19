@@ -27,7 +27,11 @@ class GetJsapiTicketRequest extends WithAccountRequest implements CacheRequest
 
     public function getCacheKey(): string
     {
-        return "WechatOfficialAccount_TICKET_{$this->getAccount()->getAppId()}";
+        $account = $this->getAccount();
+        if ($account instanceof \WechatOfficialAccountBundle\Entity\Account) {
+            return "WechatOfficialAccount_TICKET_{$account->getAppId()}";
+        }
+        throw new \RuntimeException('Account must be an instance of Account to get app ID');
     }
 
     public function getCacheDuration(): int

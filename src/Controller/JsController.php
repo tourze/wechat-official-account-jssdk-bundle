@@ -18,7 +18,7 @@ class JsController extends AbstractController
      * @see https://developers.weixin.qq.com/doc/offiaccount/OA_Web_Apps/JS-SDK.html
      */
     #[Route(path: '/wechat/official-account/jssdk/{appId}', name: 'wechat_official_account_jssdk', methods: ['GET', 'POST'])]
-    public function jssdk(string $appId, AccountRepository $accountRepository, Request $request, OfficialAccountClient $client): Response
+    public function __invoke(string $appId, AccountRepository $accountRepository, Request $request, OfficialAccountClient $client): Response
     {
         $account = $accountRepository->find($appId);
         $ticketRequest = new GetJsapiTicketRequest();
@@ -31,7 +31,7 @@ class JsController extends AbstractController
         }
 
         $timestamp = time();
-        $nonce = md5($timestamp);
+        $nonce = md5((string) $timestamp);
         $url = $request->query->get('url', '');
         $signature = sha1(sprintf('jsapi_ticket=%s&noncestr=%s&timestamp=%s&url=%s', $re['ticket'], $nonce, $timestamp, $url));
         $config = [
