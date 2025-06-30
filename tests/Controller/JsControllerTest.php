@@ -12,6 +12,7 @@ use WechatOfficialAccountBundle\Entity\Account;
 use WechatOfficialAccountBundle\Repository\AccountRepository;
 use WechatOfficialAccountBundle\Service\OfficialAccountClient;
 use WechatOfficialAccountJssdkBundle\Controller\JsController;
+use WechatOfficialAccountJssdkBundle\Exception\UnexpectedResponseException;
 
 class JsControllerTest extends TestCase
 {
@@ -132,7 +133,7 @@ class JsControllerTest extends TestCase
         );
         
         if (!$response instanceof JsonResponse) {
-            throw new \RuntimeException('Expected JsonResponse');
+            throw new UnexpectedResponseException('Expected JsonResponse');
         }
         
         return $response;

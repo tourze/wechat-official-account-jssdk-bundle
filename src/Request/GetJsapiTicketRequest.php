@@ -4,6 +4,7 @@ namespace WechatOfficialAccountJssdkBundle\Request;
 
 use HttpClientBundle\Request\CacheRequest;
 use WechatOfficialAccountBundle\Request\WithAccountRequest;
+use WechatOfficialAccountJssdkBundle\Exception\InvalidAccountException;
 
 /**
  * @see https://developers.weixin.qq.com/doc/offiaccount/OA_Web_Apps/JS-SDK.html#62
@@ -31,7 +32,7 @@ class GetJsapiTicketRequest extends WithAccountRequest implements CacheRequest
         if ($account instanceof \WechatOfficialAccountBundle\Entity\Account) {
             return "WechatOfficialAccount_TICKET_{$account->getAppId()}";
         }
-        throw new \RuntimeException('Account must be an instance of Account to get app ID');
+        throw new InvalidAccountException('Account must be an instance of Account to get app ID');
     }
 
     public function getCacheDuration(): int

@@ -8,3 +8,7 @@ services:
     resource: '../../Controller/'
   WechatOfficialAccountJssdkBundle\Service\:
     resource: '../../Service/'
+
+  wechat_official_account_jssdk.controller_loader:
+    class: WechatOfficialAccountJssdkBundle\Service\AttributeControllerLoader
+    tags: ['routing.loader']
