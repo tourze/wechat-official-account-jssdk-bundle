@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace WechatOfficialAccountJssdkBundle\Service;
 
 use Symfony\Bundle\FrameworkBundle\Routing\AttributeRouteControllerLoader;
@@ -10,7 +12,7 @@ use Tourze\RoutingAutoLoaderBundle\Service\RoutingAutoLoaderInterface;
 use WechatOfficialAccountJssdkBundle\Controller\JsController;
 
 #[AutoconfigureTag(name: 'routing.loader')]
-class AttributeControllerLoader extends Loader implements RoutingAutoLoaderInterface
+final class AttributeControllerLoader extends Loader implements RoutingAutoLoaderInterface
 {
     private AttributeRouteControllerLoader $controllerLoader;
 
@@ -34,6 +36,7 @@ class AttributeControllerLoader extends Loader implements RoutingAutoLoaderInter
     {
         $collection = new RouteCollection();
         $collection->addCollection($this->controllerLoader->load(JsController::class));
+
         return $collection;
     }
 }

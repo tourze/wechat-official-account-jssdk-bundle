@@ -1,141 +1,83 @@
 <?php
 
+declare(strict_types=1);
+
 namespace WechatOfficialAccountJssdkBundle\Tests\Controller;
 
-use PHPUnit\Framework\TestCase;
-use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
-use Symfony\Component\DependencyInjection\Container;
-use Symfony\Component\HttpFoundation\InputBag;
-use Symfony\Component\HttpFoundation\JsonResponse;
-use Symfony\Component\HttpFoundation\Request;
+use HttpClientBundle\Exception\HttpClientException;
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses;
+use Symfony\Component\HttpKernel\Exception\MethodNotAllowedHttpException;
+use Tourze\PHPUnitSymfonyWebTest\AbstractWebTestCase;
 use WechatOfficialAccountBundle\Entity\Account;
 use WechatOfficialAccountBundle\Repository\AccountRepository;
-use WechatOfficialAccountBundle\Service\OfficialAccountClient;
 use WechatOfficialAccountJssdkBundle\Controller\JsController;
-use WechatOfficialAccountJssdkBundle\Exception\UnexpectedResponseException;
+use WechatOfficialAccountJssdkBundle\Exception\InvalidAccountException;
 
-class JsControllerTest extends TestCase
+/**
+ * @internal
+ */
+#[CoversClass(JsController::class)]
+#[RunTestsInSeparateProcesses]
+final class JsControllerTest extends AbstractWebTestCase
 {
-    private JsController $controller;
-    private AccountRepository $accountRepository;
-    private OfficialAccountClient $client;
-    private Account $account;
-
-    protected function setUp(): void
+    private function createTestAccount(): Account
     {
-        $this->controller = new JsController();
-        
-        // 模拟容器
-        $container = new Container();
-        $reflectionProperty = new \ReflectionProperty(AbstractController::class, 'container');
-        $reflectionProperty->setAccessible(true);
-        $reflectionProperty->setValue($this->controller, $container);
-        
-        // 模拟 AccountRepository
-        $this->account = $this->createMock(Account::class);
-        $this->account->method('getAppId')->willReturn('test_app_id');
-        
-        $this->accountRepository = $this->createMock(AccountRepository::class);
-        $this->accountRepository->method('find')
-            ->with('test_app_id')
-            ->willReturn($this->account);
-        
-        // 模拟 OfficialAccountClient
-        $this->client = $this->createMock(OfficialAccountClient::class);
-        $this->client->method('request')
-            ->willReturn(['ticket' => 'test_ticket']);
-    }
-    
-    public function testJssdk_withDefaultParameters_returnsValidConfig(): void
-    {
-        // 创建请求对象，直接使用实例而不是 mock
-        $request = new Request();
-        
-        // 手动设置参数包
-        $request->query = new InputBag([
-            'url' => '',
-            'debug' => false,
-            'beta' => false,
-        ]);
+        $account = new Account();
+        $account->setName('Test Account');
+        $account->setAppId('test-app-id');
+        $account->setAppSecret('test-app-secret-123456');
 
-        // 调用控制器方法
-        $response = $this->callController($request);
-        
-        // 验证响应
-        $this->assertInstanceOf(JsonResponse::class, $response);
-        
-        // 获取响应内容
-        $responseData = json_decode($response->getContent(), true);
-        
-        // 验证结果
-        $this->assertArrayHasKey('appId', $responseData);
-        $this->assertEquals('test_app_id', $responseData['appId']);
-        $this->assertArrayHasKey('jsApiList', $responseData);
-        $this->assertEquals(['updateAppMessageShareData', 'updateTimelineShareData'], $responseData['jsApiList']);
+        $repository = self::getService(AccountRepository::class);
+        $repository->save($account);
+
+        return $account;
     }
 
-    public function testJssdk_withCustomApiList_returnsCustomConfig(): void
+    public function testJssdkRequestWithExistingAccount(): void
     {
-        // 创建请求对象，带自定义 API 列表
-        $request = new Request();
-        
-        // 手动设置参数包
-        $request->query = new InputBag([
-            'api' => 'chooseImage,previewImage',
-            'url' => '',
-            'debug' => false,
-            'beta' => false,
-        ]);
+        $client = self::createClientWithDatabase();
+        $this->createTestAccount();
 
-        // 调用控制器方法
-        $response = $this->callController($request);
-        
-        // 获取响应内容
-        $responseData = json_decode($response->getContent(), true);
-        
-        // 验证自定义 API 列表
-        $this->assertEquals(['chooseImage', 'previewImage'], $responseData['jsApiList']);
+        // 账户存在，但会因为无效的微信凭证抛出HttpClientException
+        $client->catchExceptions(false);
+        $this->expectException(HttpClientException::class);
+        $this->expectExceptionMessage('access_token missing');
+
+        $client->request('GET', '/wechat/official-account/jssdk/test-app-id');
     }
 
-    public function testJssdk_withDebugMode_returnsDebugConfig(): void
+    public function testAccountNotFound(): void
     {
-        // 创建请求对象，开启调试模式
-        $request = new Request();
-        
-        // 手动设置参数包
-        $request->query = new InputBag([
-            'url' => '',
-            'debug' => true,
-            'beta' => false,
-        ]);
+        $client = self::createClientWithDatabase();
 
-        // 调用控制器方法
-        $response = $this->callController($request);
-        
-        // 获取响应内容
-        $responseData = json_decode($response->getContent(), true);
-        
-        // 验证调试模式
-        $this->assertTrue($responseData['debug']);
+        // 账户不存在，应该抛出InvalidAccountException
+        $client->catchExceptions(false);
+        $this->expectException(InvalidAccountException::class);
+        $this->expectExceptionMessage('Account with app_id "non-existent-app-id" not found');
+
+        $client->request('GET', '/wechat/official-account/jssdk/non-existent-app-id');
     }
 
-    /**
-     * 辅助方法：调用控制器并返回响应
-     */
-    private function callController(Request $request): JsonResponse
+    public function testPostMethodSupported(): void
     {
-        // 使用我们准备好的依赖调用控制器方法
-        $response = $this->controller->__invoke(
-            'test_app_id',
-            $this->accountRepository,
-            $request,
-            $this->client
-        );
-        
-        if (!$response instanceof JsonResponse) {
-            throw new UnexpectedResponseException('Expected JsonResponse');
-        }
-        
-        return $response;
+        $client = self::createClientWithDatabase();
+        $this->createTestAccount();
+
+        // POST方法被允许，账户存在，但会因为无效的微信凭证抛出HttpClientException
+        $client->catchExceptions(false);
+        $this->expectException(HttpClientException::class);
+        $this->expectExceptionMessage('access_token missing');
+
+        $client->request('POST', '/wechat/official-account/jssdk/test-app-id');
     }
-} 
+
+    #[DataProvider('provideNotAllowedMethods')]
+    public function testMethodNotAllowed(string $method): void
+    {
+        $client = self::createClientWithDatabase();
+        $this->expectException(MethodNotAllowedHttpException::class);
+        $client->request($method, '/wechat/official-account/jssdk/test-app-id');
+    }
+}

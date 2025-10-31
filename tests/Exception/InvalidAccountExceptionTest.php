@@ -1,13 +1,20 @@
 <?php
 
-namespace WechatOfficialAccountJssdkBundle\Tests\Unit\Exception;
+declare(strict_types=1);
 
-use PHPUnit\Framework\TestCase;
+namespace WechatOfficialAccountJssdkBundle\Tests\Exception;
+
+use PHPUnit\Framework\Attributes\CoversClass;
+use Tourze\PHPUnitBase\AbstractExceptionTestCase;
 use WechatOfficialAccountJssdkBundle\Exception\InvalidAccountException;
 
-class InvalidAccountExceptionTest extends TestCase
+/**
+ * @internal
+ */
+#[CoversClass(InvalidAccountException::class)]
+final class InvalidAccountExceptionTest extends AbstractExceptionTestCase
 {
-    public function testException_isInstanceOfRuntimeException(): void
+    public function testExceptionIsInstanceOfRuntimeException(): void
     {
         $exception = new InvalidAccountException('Test message');
 
@@ -15,7 +22,7 @@ class InvalidAccountExceptionTest extends TestCase
         $this->assertEquals('Test message', $exception->getMessage());
     }
 
-    public function testException_canBeCreatedWithoutMessage(): void
+    public function testExceptionCanBeCreatedWithoutMessage(): void
     {
         $exception = new InvalidAccountException();
 

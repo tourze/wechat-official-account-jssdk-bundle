@@ -1,8 +1,11 @@
 <?php
 
+declare(strict_types=1);
+
 namespace WechatOfficialAccountJssdkBundle\Request;
 
 use HttpClientBundle\Request\CacheRequest;
+use WechatOfficialAccountBundle\Entity\Account;
 use WechatOfficialAccountBundle\Request\WithAccountRequest;
 use WechatOfficialAccountJssdkBundle\Exception\InvalidAccountException;
 
@@ -16,7 +19,10 @@ class GetJsapiTicketRequest extends WithAccountRequest implements CacheRequest
         return 'https://api.weixin.qq.com/cgi-bin/ticket/getticket?type=jsapi';
     }
 
-    public function getRequestOptions(): ?array
+    /**
+     * @return array<string, mixed>
+     */
+    public function getRequestOptions(): array
     {
         return [];
     }
@@ -29,7 +35,7 @@ class GetJsapiTicketRequest extends WithAccountRequest implements CacheRequest
     public function getCacheKey(): string
     {
         $account = $this->getAccount();
-        if ($account instanceof \WechatOfficialAccountBundle\Entity\Account) {
+        if ($account instanceof Account) {
             return "WechatOfficialAccount_TICKET_{$account->getAppId()}";
         }
         throw new InvalidAccountException('Account must be an instance of Account to get app ID');

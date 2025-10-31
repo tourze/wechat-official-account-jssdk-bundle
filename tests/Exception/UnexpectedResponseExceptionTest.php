@@ -1,13 +1,20 @@
 <?php
 
-namespace WechatOfficialAccountJssdkBundle\Tests\Unit\Exception;
+declare(strict_types=1);
 
-use PHPUnit\Framework\TestCase;
+namespace WechatOfficialAccountJssdkBundle\Tests\Exception;
+
+use PHPUnit\Framework\Attributes\CoversClass;
+use Tourze\PHPUnitBase\AbstractExceptionTestCase;
 use WechatOfficialAccountJssdkBundle\Exception\UnexpectedResponseException;
 
-class UnexpectedResponseExceptionTest extends TestCase
+/**
+ * @internal
+ */
+#[CoversClass(UnexpectedResponseException::class)]
+final class UnexpectedResponseExceptionTest extends AbstractExceptionTestCase
 {
-    public function testException_isInstanceOfRuntimeException(): void
+    public function testExceptionIsInstanceOfRuntimeException(): void
     {
         $exception = new UnexpectedResponseException('Test message');
 
@@ -15,7 +22,7 @@ class UnexpectedResponseExceptionTest extends TestCase
         $this->assertEquals('Test message', $exception->getMessage());
     }
 
-    public function testException_canBeCreatedWithoutMessage(): void
+    public function testExceptionCanBeCreatedWithoutMessage(): void
     {
         $exception = new UnexpectedResponseException();
 
